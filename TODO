@@ -1,5 +1,7 @@
-TODO
+New Edits -- May 9, 2017
 
-* Extract more information from captured Mode S messages.
-* Improve the web interface gmap.html.
-* Enhance the algorithm to reliably decode more messages.
+* Edit C files to enable two new columns for elevation and azimuth.
+
+* Edit HTML files to enable elevation and azimuth to be displayed.
+
+* Radar display and angle of detection in HTML.
