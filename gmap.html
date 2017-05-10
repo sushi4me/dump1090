@@ -39,8 +39,8 @@
     </script>
     <script type="text/javascript">
     Map=null;
-    CenterLat=45.0;
-    CenterLon=9.0;
+    CenterLat=34.2016;
+    CenterLon=-118.4879;
     Planes={};
     NumPlanes = 0;
     Selected=null
@@ -93,6 +93,9 @@
         html += 'Altitude: '+p.altitude+' feet<br>';
         html += 'Speed: '+p.speed+' knots<br>';
         html += 'Coordinates: '+p.lat+', '+p.lon+'<br>';
+	html += 'Azimuth: ' +p.azim+ ' degrees<br>';
+	html += 'Elevation: ' +p.elev+ ' degrees<br>';
+	html += 'Distance: ' +p.dist+ ' km<br>';
         i.innerHTML = html;
     }
 
@@ -118,6 +121,9 @@
                     myplane.lon = plane.lon;
                     myplane.track = plane.track;
                     myplane.flight = plane.flight;
+		    myplane.elev = plane.elev;
+		    myplane.azim = plane.azim;
+		    myplane.dist = plane.dist;
                     if (myplane.hex == Selected)
                         refreshSelectedInfo();
                 } else {
