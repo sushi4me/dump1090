@@ -28,6 +28,7 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -94,9 +95,10 @@
 #define MODES_NOTUSED(V) ((void) V)
 
 /* Hard-coded latitude, longitute, altitude for the radar position. */
-#define HERE_LAT 	0.0
-#define HERE_LON 	0.0
-#define HERE_ALT 	0
+/* TO DO: Jisha gave the numbers in the MATLAB code from her vnvault. Check this. */
+#define HERE_LAT 	34.2016
+#define HERE_LON 	-118.4879
+#define HERE_ALT 	237.744
 
 /* Structure used to describe a networking client. */
 struct client {
@@ -104,6 +106,18 @@ struct client {
 	int service;    /* TCP port the client is connected to. */
 	char buf[MODES_CLIENT_BUF_SIZE+1];    /* Read buffer. */
 	int buflen;                         /* Amount of data on buffer. */
+};
+
+struct coord {
+	double x;
+	double y;
+	double z;
+	
+	double nx;
+	double ny;
+	double nz;
+
+	double radius;
 };
 
 /* Structure used to describe an aircraft in iteractive mode. */
@@ -238,13 +252,6 @@ struct modesMessage {
 	int altitude, unit;
 };
 
-struct coord {
-	double x;
-	double y;
-	double z;
-	double radius;
-};
-
 void interactiveShowData(void);
 struct aircraft* interactiveReceiveData(struct modesMessage *mm);
 void modesSendRawOutput(struct modesMessage *mm);
@@ -289,10 +296,10 @@ double GeocentricLatitude(double m_lat) {
 	return atan((1.0 - e2) * tan(m_lat));
 }
 
-void locationToPoint(struct *aircraft a, bool oblate) {
+void locationToPoint(struct aircraft *a, bool oblate) {
 	double m_lat = a->lat * M_PI / 180.0;
 	double m_lon = a->lon * M_PI / 180.0;
-	double radius = oblate ? EarthRadiusInMeters(m_lat) : 6371009;
+	double m_radius = oblate ? EarthRadiusInMeters(m_lat) : 6371009;
 	double a_lat = oblate? GeocentricLatitude(m_lat) : m_lat;
 
 	double m_cos_lon = cos(m_lon);
@@ -300,9 +307,9 @@ void locationToPoint(struct *aircraft a, bool oblate) {
 	double m_cos_lat = cos(a_lat);
 	double m_sin_lat = sin(a_lat);
 
-	double x = radius * m_cos_lon * m_cos_lat;
-	double y = radius * m_sin_lon * m_cos_lat;
-	double z = radius * m_sin_lat;
+	double m_x = m_radius * m_cos_lon * m_cos_lat;
+	double m_y = m_radius * m_sin_lon * m_cos_lat;
+	double m_z = m_radius * m_sin_lat;
 
 	/* We use geocentric latitude to calculate (x, y, z) on the Earth.
 	   Now we use geodetic latitude to calculate normal vector from
@@ -310,48 +317,49 @@ void locationToPoint(struct *aircraft a, bool oblate) {
 	double m_cos_glat = cos(m_lat);
 	double m_sin_glat = sin(m_lat);
 
-	double nx = m_cos_glat * m_cos_lon;
-	double ny = m_cos_glat * m_sin_lon;
-	double nz = m_sin_glat;
+	(a->coordP)->nx = m_cos_glat * m_cos_lon;
+	(a->coordP)->ny = m_cos_glat * m_sin_lon;
+	(a->coordP)->nz = m_sin_glat;
 
-	x += a->altitude * nx;
-	y += a->altitude * ny;
-	z += a->altitude * nz;
-	
-	a->coordP->x = x;
-	a->coordP->y = y;
-	a->coordP->z = z;
-	a->coordP->radius = radius;
+	m_x += a->altitude * (a->coordP)->nx;
+	m_y += a->altitude * (a->coordP)->ny;
+	m_z += a->altitude * (a->coordP)->nz;
+
+	(a->coordP)->x = m_x;
+	(a->coordP)->y = m_y;
+	(a->coordP)->z = m_z;
+	(a->coordP)->radius = m_radius;
 }
 
-double distance(struct *aircraft ap, struct *aircraft bp) {
-	double dx = ap->coordP->x - bp->coordP->x;
-	double dy = ap->coordP->y - bp->coordP->y;
-	double dz = ap->coordP->z - bp->coordP->z;
+double distance(struct aircraft *ap, struct aircraft *bp) {
+	double dx = (ap->coordP)->x - (bp->coordP)->x;
+	double dy = (ap->coordP)->y - (bp->coordP)->y;
+	double dz = (ap->coordP)->z - (bp->coordP)->z;
 
 	return sqrt(pow(dx, 2) + pow(dy, 2) + pow(dz, 2));
 }
 
-struct coord rotateGlobe(struct *aircraft ap, struct *aircraft bp, bool oblate) {
-	struct aircraft cp;
+struct coord rotateGlobe(struct aircraft *ap, struct aircraft *bp, bool oblate) {
+	struct aircraft *cp = malloc(sizeof(struct aircraft));
 	struct coord return_coord;
 
+	cp->coordP = malloc(sizeof(struct coord));
 	cp->lat = bp->lat;
 	cp->lon = bp->lon - ap->lon;
 	cp->altitude = bp->altitude;
 
 	locationToPoint(cp, oblate);
 
-	double m_lat = -ap->lat * M_PI / 180.0;
+	double m_lat = -(ap->lat) * M_PI / 180.0;
 	if (oblate) {
 		m_lat = GeocentricLatitude(m_lat);
 	}
 	double m_cos = cos(m_lat);
 	double m_sin = sin(m_lat);
 
-	return_coord.x = (cp.coordP->x * m_cos) - (cp.coordP->z * m_sin);
-	return_coord.y = cp.coordP->y;
-	return_coord.z = (cp.coordP->x * m_sin) + (cp.coordP->z * m_cos);
+	return_coord.x = ((cp->coordP)->x * m_cos) - ((cp->coordP)->z * m_sin);
+	return_coord.y = (cp->coordP)->y;
+	return_coord.z = ((cp->coordP)->x * m_sin) + ((cp->coordP)->z * m_cos);
 
 	return return_coord;
 }
@@ -360,16 +368,15 @@ struct coord rotateGlobe(struct *aircraft ap, struct *aircraft bp, bool oblate) 
    The example used oblate as an option to calculate the
    coordinates in another fashion, just pass TRUE. Kept
    in case we it for debugging. */
-void calculate(bool oblate) {
-	struct aircraft *a = Modes.aircrafts;
-
+void calculate(struct aircraft *a, bool oblate) {
 	/* Treat the radar as a stationary "aircraft". */
 	/* To be honest I just don't want to write two functions that take in differing structs. */
-	struct aircraft *locationHere;
-	memset(locationHere, 0, sizeof(aircraft));
+	struct aircraft RADAR_POS;	
+	struct aircraft *locationHere = &RADAR_POS;
+	locationHere->coordP = malloc(sizeof(struct coord));
 	locationHere->lat = HERE_LAT;
 	locationHere->lon = HERE_LON;
-	locationHere->alt = HERE_ALT;
+	locationHere->altitude = HERE_ALT;
 
 	locationToPoint(locationHere, oblate);
 
@@ -380,7 +387,7 @@ void calculate(bool oblate) {
 		a->dist = 0.001 * distance(a, locationHere);
 
 		/* Calculate azimuth */
-		struct coord br = rotateGlobe(a, locationHere, true);
+		struct coord br = rotateGlobe(locationHere, a, true);
 		if (pow(br.z, 2) + pow(br.y, 2) > 0.000001) {
 			double theta = atan2(br.z, br.y) * 180.0 / M_PI;
 			double azimuth = 90.0 - theta;
@@ -393,7 +400,23 @@ void calculate(bool oblate) {
 			a->azim = azimuth;
 		}
 
-		/* TO DO */
+		/* calculate elevation */
+		if(a->dist <= 0)
+			a->elev = 0;
+		else {		
+			double m_x = (a->coordP)->x - (locationHere->coordP)->x;
+			double m_y = (a->coordP)->y - (locationHere->coordP)->y;			
+			double m_z = (a->coordP)->z - (locationHere->coordP)->z;			
+			
+			double dist = distance(a, locationHere);
+
+			/* Normalized distance */
+			double norm_x = m_x / dist;
+			double norm_y = m_y / dist;
+			double norm_z = m_z / dist;
+
+			a->elev = 90 - 180/M_PI * acos(norm_x * (a->coordP)->nx + norm_y * (a->coordP)->ny + norm_z * (a->coordP)->nz);
+		}
 
 		a = a->next;
 	}
@@ -1727,9 +1750,12 @@ struct aircraft *interactiveCreateAircraft(uint32_t addr) {
 	a->lon = 0;
 	a->elev = 0;	/* Elevation */
 	a->azim = 0;	/* Azimuth */
+	a->dist = 0;	/* Distance */
+	a->coordP = malloc(sizeof(struct coord));
 	a->seen = time(NULL);
 	a->messages = 0;
 	a->next = NULL;
+
 	return a;
 }
 
@@ -1957,8 +1983,8 @@ void interactiveShowData(void) {
 
 	printf("\x1b[H\x1b[2J");    /* Clear the screen */
 	printf(
-"Hex\tFlight\tAltitude\tSpeed\tLat\t\t\tLon\t\t\tAzimuth\tTrack\tMessages\tSeen %s\n"
-"--------------------------------------------------------------------------------\n",
+"Hex    Flight   Altitude  Speed   Lat     Lon      Azimuth Dist      Elv   Track Messages  Seen%s\n"
+"---------------------------------------------------------------------------------------------------\n",
 		progress);
 
 	while(a && count < Modes.interactive_rows) {
@@ -1970,9 +1996,9 @@ void interactiveShowData(void) {
 			speed *= 1.852;
 		}
 
-		printf("%-6s\t%-8s\t%-9d\t%-7d\t%-7.03f\t\t\t%-7.03f\t\t\t%d\t%-3d\t%-9ld\t%d sec\n",
+		printf("%-6s %-8s %-9d %-7d %-7.03f %-8.03f %-7.2f %-9.2f %-3.2f %-4d  %-9ld %d sec\n",
 			a->hexaddr, a->flight, altitude, speed,
-			a->lat, a->lon, a->azim, a->track, a->messages,
+			a->lat, a->lon, a->azim, a->dist, a->elev, a->track, a->messages,
 			(int)(now - a->seen));
 		a = a->next;
 		count++;
@@ -2759,6 +2785,7 @@ int main(int argc, char **argv) {
 		pthread_mutex_unlock(&Modes.data_mutex);
 		detectModeS(Modes.magnitude, Modes.data_len/2);
 		backgroundTasks();
+		calculate(Modes.aircrafts, true);
 		pthread_mutex_lock(&Modes.data_mutex);
 		if (Modes.exit) break;
 	}
@@ -2782,5 +2809,6 @@ int main(int argc, char **argv) {
 	rtlsdr_close(Modes.dev);
 	return 0;
 }
+
 
 
