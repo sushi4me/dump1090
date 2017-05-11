@@ -90,12 +90,12 @@
         if (p.flight.length) {
             html += '<b>'+p.flight+'</b><br>';
         }
-        html += 'Altitude: '+p.altitude+' feet<br>';
-        html += 'Speed: '+p.speed+' knots<br>';
-        html += 'Coordinates: '+p.lat+', '+p.lon+'<br>';
-	html += 'Azimuth: ' +p.azim+ ' degrees<br>';
-	html += 'Elevation: ' +p.elev+ ' degrees<br>';
-	html += 'Distance: ' +p.dist+ ' km<br>';
+        html += 'Distance: '    + p.dist.format(".2f") +      ' nautical mile<br>';
+        html += 'Azimuth: '     + p.azim.format(".2f") +      ' degrees<br>';
+        html += 'Elevation: '   + p.elev.format(".2f") +      ' degrees<br>';
+        html += 'Altitude: '    + p.altitude.format(".2f") +  ' feet<br>';
+        html += 'Speed: '       + p.speed.format(".2f") +     ' knots<br>';
+        html += 'Coordinates: ' + p.lat.format(".2f") +       ', ' + p.lon.format(".2f") + '<br>';
         i.innerHTML = html;
     }
 

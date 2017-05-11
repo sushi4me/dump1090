@@ -383,8 +383,8 @@ void calculate(struct aircraft *a, bool oblate) {
 	while(a) {
 		locationToPoint(a, oblate);
 	
-		/* Calculate distance */
-		a->dist = 0.001 * distance(a, locationHere);
+		/* Calculate distance (0.539957 nautical mile = 1 km*/
+		a->dist = 0.001 * 0.539957 * distance(a, locationHere);
 
 		/* Calculate azimuth */
 		struct coord br = rotateGlobe(locationHere, a, true);
@@ -1996,7 +1996,7 @@ void interactiveShowData(void) {
 			speed *= 1.852;
 		}
 
-		printf("%-6s %-8s %-9d %-7d %-7.03f %-8.03f %-7.2f %-9.2f %-3.2f %-4d  %-9ld %d sec\n",
+		printf("%-6s %-8s %-9d %-7d %-7.2f %-8.2f %-7.2f %-9.2f %-3.2f %-4d  %-9ld %d sec\n",
 			a->hexaddr, a->flight, altitude, speed,
 			a->lat, a->lon, a->azim, a->dist, a->elev, a->track, a->messages,
 			(int)(now - a->seen));
