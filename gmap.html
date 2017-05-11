@@ -90,12 +90,12 @@
         if (p.flight.length) {
             html += '<b>'+p.flight+'</b><br>';
         }
-        html += 'Distance: '    + p.dist.format(".2f") +      ' nautical mile<br>';
-        html += 'Azimuth: '     + p.azim.format(".2f") +      ' degrees<br>';
-        html += 'Elevation: '   + p.elev.format(".2f") +      ' degrees<br>';
-        html += 'Altitude: '    + p.altitude.format(".2f") +  ' feet<br>';
-        html += 'Speed: '       + p.speed.format(".2f") +     ' knots<br>';
-        html += 'Coordinates: ' + p.lat.format(".2f") +       ', ' + p.lon.format(".2f") + '<br>';
+        html += 'Distance:\t'    + parseFloat(p.dist).toFixed(2) +      ' nautical mi.<br>';
+        html += 'Azimuth:\t'     + parseFloat(p.azim).toFixed(2) +      ' degrees<br>';
+        html += 'Elevation:\t'   + parseFloat(p.elev).toFixed(2) +      ' degrees<br>';
+        html += 'Altitude:\t'    + parseFloat(p.altitude).toFixed(2) +  ' feet<br>';
+        html += 'Speed:\t'       + parseFloat(p.speed).toFixed(2) +     ' knots<br>';
+        html += 'Coordinates:\t' + parseFloat(p.lat).toFixed(2) +       ', ' + parseFloat(p.lon).toFixed(2) + '<br>';
         i.innerHTML = html;
     }
 
@@ -159,7 +159,7 @@
     function initialize() {
         var mapOptions = {
             center: new google.maps.LatLng(CenterLat, CenterLon),
-            zoom: 5,
+            zoom: 14,
             mapTypeId: google.maps.MapTypeId.ROADMAP
         };
         Map = new google.maps.Map(document.getElementById("map_canvas"), mapOptions);
