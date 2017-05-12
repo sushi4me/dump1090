@@ -40,6 +40,10 @@
       		src="https://maps.googleapis.com/maps/api/js?sensor=true">
     	</script>
 
+	<script type="text/javascript" 
+		src="http://maps.googleapis.com/maps/api/js?libraries=geometry&sensor=false"> 
+	</script>
+
     	<script type="text/javascript">
 			CenterLat = 34.2016;
     		CenterLon = -118.4879; 
@@ -52,6 +56,9 @@
 			Radius_3 = 18520;
 			Radius_4 = 27780;
 			Radius_5 = 37040;
+			beamWidth = 30;
+			radarRange = 37000;
+			radarDirection = 0;
     		Selected = null;
 
 			var sectionMap = {};
@@ -81,84 +88,7 @@
 				center: new google.maps.LatLng(CenterLat, CenterLon),
 				radius: Radius_5 /* meters */
 			};
-/* Arc section */
-/*
-			Number.prototype.toRad = function () {
-  				return this * Math.PI / 180;
-			};
-
-			Number.prototype.toDeg = function () {
-  				return this * 180 / Math.PI;
-			};
-
-			Number.prototype.toBrng = function () {
-  				return (this.toDeg() + 360) % 360;
-			};
-
-			google.maps.LatLng.prototype.DestinationPoint = function (brng, dist) {
-				var R = EarthRadiusMeters; // earth's mean radius in meters
-				var brng = brng.toRad();
-				var lat1 = this.lat().toRad(), lon1 = this.lng().toRad();
-				var lat2 = Math.asin( Math.sin(lat1)*Math.cos(dist/R) + 
-                			Math.cos(lat1)*Math.sin(dist/R)*Math.cos(brng) );
-				var lon2 = lon1 + Math.atan2(Math.sin(brng)*Math.sin(dist/R)*Math.cos(lat1), 
-                    			Math.cos(dist/R)-Math.sin(lat1)*Math.sin(lat2));
-
-				return new google.maps.LatLng(lat2.toDeg(), lon2.toDeg());
-			}
-
-			google.maps.LatLng.prototype.Bearing = function(otherLatLng) {
-  				var from = this;
-  				var to = otherLatLng;
-  				if (from.equals(to)) {
-    				return 0;
-  				}
-  				var lat1 = from.latRadians();
-  				var lon1 = from.lngRadians();
-  				var lat2 = to.latRadians();
-  				var lon2 = to.lngRadians();
-  				var angle = - Math.atan2( Math.sin( lon1 - lon2 ) * Math.cos( lat2 ), 
-					Math.cos( lat1 ) * Math.sin( lat2 ) - Math.sin( lat1 ) * Math.cos( lat2 ) * Math.cos( lon1 - lon2 ) );
-  				if ( angle < 0.0 ) angle  += Math.PI * 2.0;
-  				if ( angle > Math.PI ) angle -= Math.PI * 2.0; 
-  				return parseFloat(angle.toDeg());
-			}
-
-			function createMarker(latlng, html) {
-    				var contentString = html;
-    				var marker = new google.maps.Marker({
-        				position: 	latlng,
-        				map: 		map,
-        				zIndex: 	Math.round(latlng.lat()*-100000)<<5
-        			});
-    				bounds.extend(latlng);
-    				google.maps.event.addListener(marker, 'click', function() {
-        				infowindow.setContent(contentString); 
-        				infowindow.open(map,marker);
-        			});
-			}
-
-			function drawArc(center, initialBearing, finalBearing, radius) {
-				var d2r = MATH.PI / 180;
-				var r2d = 180 / MATH.PI;
-
-				var points = 32;
-
-				// Find the raidus in lat/lon 
-   				var rlat = (radius / EarthRadiusMeters) * r2d; 
-   				var rlng = rlat / Math.cos(center.lat() * d2r); 
-   				var extp = new Array();
-
-   				if (initialBearing > finalBearing) finalBearing += 360;
-   				var deltaBearing = finalBearing - initialBearing;
-   				deltaBearing = deltaBearing/points;
-   				for (var i=0; (i < points+1); i++) { 
-      				extp.push(center.DestinationPoint(initialBearing + i*deltaBearing, radius)); 
-      				bounds.extend(extp[extp.length-1]);
-   				} 
-   				return extp;		
-			}
-*/
+			
     		function getIconForPlane(plane) {
         		var r = 255, g = 255, b = 0;
         		var maxalt = 40000; /* Max altitude in the average case */
@@ -270,6 +200,17 @@
         		});
     		}
 
+		function drawBeam(center, distance, startAngle, beamWidth) {
+			var spherical = google.maps.geometry.spherical;
+			var path = [];
+			path.push(center);			
+			for (i = 0; i < beamWidth; i++) {
+				var temp = spherical.computeOffset(center, distance, startAngle - i);
+				path.push(temp);
+			}
+			return path;		
+		}
+
     		function initialize() {
 				var centerPoint	= new google.maps.LatLng(CenterLat, CenterLon);
 
@@ -280,43 +221,34 @@
         		};
 
         		Map = new google.maps.Map(document.getElementById("map_canvas"), mapOptions);
-/*
-				var startPoint	= new google.maps.LatLng(CenterLat+1, CenterLon+1);
-				var endPoint	= new google.maps.LatLng(CenterLat-1, CenterLon+2);
-				
-				var arcPts = drawArc(centerPoint, 
-					centerPoint.Bearing(startPoint),
-					centerPoint.Bearing(endPoint),
-					centerPoint.distanceFrom(startPoint));
 
-				arcPts.push(centerPoint);
-				arcPts.push(startPoint);
+			/* Draws concentric circles */
 
-				var piePoly = new google.maps.Polygon({
-					paths:			[arcPts],
-					strokeColor:	'#00FF00',
+			for(var city in cityMap) {
+				var circle_1_options = new google.maps.Circle({
+					strokeColor:	'#FF0000',
 					strokeOpacity:	0.5,
-					strokeWeight:	2,
-					fillColor:		'#FF0000',
-					fillOpacity:	0.3,
-					map:			Map
+					strokeWeight:	4,
+					fillColor:		'#FFFFFF',
+					fillOpacity:	0.0,
+					map:			Map,
+					center:			cityMap[city].center,
+					radius:			cityMap[city].radius,
+					draggable:		false
 				});
-*/
-				/* Draws concentric circles */
+			}
 
-				for(var city in cityMap) {
-					var circle_1_options = new google.maps.Circle({
-						strokeColor:	'#FF0000',
-						strokeOpacity:	0.5,
-						strokeWeight:	4,
-						fillColor:		'#FFFFFF',
-						fillOpacity:	0.0,
-						map:			Map,
-						center:			cityMap[city].center,
-						radius:			cityMap[city].radius,
-						draggable:		false
-					});
-				}
+			/* Draw radar beam */
+			var path = drawBeam(centerPoint, radarRange, radarDirection + beamWidth/2, beamWidth);
+			var bermudaTriangle = new google.maps.Polygon({
+			  paths: path,
+			  strokeColor: '#FF0000',
+			  strokeOpacity: 0.8,
+			  strokeWeight: 2,
+			  fillColor: '#FF0000',
+			  fillOpacity: 0.35
+			});
+			bermudaTriangle.setMap(Map);
 
         		/* Setup our timer to poll from the server. */
         		window.setInterval(function() {
