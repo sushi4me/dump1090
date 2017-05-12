@@ -81,10 +81,66 @@
 				center: new google.maps.LatLng(CenterLat, CenterLon),
 				radius: Radius_5 /* meters */
 			};
+/* Arc section */
+/*
+			Number.prototype.toRad = function () {
+  				return this * Math.PI / 180;
+			};
+
+			Number.prototype.toDeg = function () {
+  				return this * 180 / Math.PI;
+			};
+
+			Number.prototype.toBrng = function () {
+  				return (this.toDeg() + 360) % 360;
+			};
+
+			google.maps.LatLng.prototype.DestinationPoint = function (brng, dist) {
+				var R = EarthRadiusMeters; // earth's mean radius in meters
+				var brng = brng.toRad();
+				var lat1 = this.lat().toRad(), lon1 = this.lng().toRad();
+				var lat2 = Math.asin( Math.sin(lat1)*Math.cos(dist/R) + 
+                			Math.cos(lat1)*Math.sin(dist/R)*Math.cos(brng) );
+				var lon2 = lon1 + Math.atan2(Math.sin(brng)*Math.sin(dist/R)*Math.cos(lat1), 
+                    			Math.cos(dist/R)-Math.sin(lat1)*Math.sin(lat2));
+
+				return new google.maps.LatLng(lat2.toDeg(), lon2.toDeg());
+			}
+
+			google.maps.LatLng.prototype.Bearing = function(otherLatLng) {
+  				var from = this;
+  				var to = otherLatLng;
+  				if (from.equals(to)) {
+    				return 0;
+  				}
+  				var lat1 = from.latRadians();
+  				var lon1 = from.lngRadians();
+  				var lat2 = to.latRadians();
+  				var lon2 = to.lngRadians();
+  				var angle = - Math.atan2( Math.sin( lon1 - lon2 ) * Math.cos( lat2 ), 
+					Math.cos( lat1 ) * Math.sin( lat2 ) - Math.sin( lat1 ) * Math.cos( lat2 ) * Math.cos( lon1 - lon2 ) );
+  				if ( angle < 0.0 ) angle  += Math.PI * 2.0;
+  				if ( angle > Math.PI ) angle -= Math.PI * 2.0; 
+  				return parseFloat(angle.toDeg());
+			}
+
+			function createMarker(latlng, html) {
+    				var contentString = html;
+    				var marker = new google.maps.Marker({
+        				position: 	latlng,
+        				map: 		map,
+        				zIndex: 	Math.round(latlng.lat()*-100000)<<5
+        			});
+    				bounds.extend(latlng);
+    				google.maps.event.addListener(marker, 'click', function() {
+        				infowindow.setContent(contentString); 
+        				infowindow.open(map,marker);
+        			});
+			}
 
 			function drawArc(center, initialBearing, finalBearing, radius) {
-				var d2r = MATH.PI / 180; /* degrees to radians */
-				var r2d = 180 / MATH.PI; /* radians to degrees */
+				var d2r = MATH.PI / 180;
+				var r2d = 180 / MATH.PI;
 
 				var points = 32;
 
@@ -102,7 +158,7 @@
    				} 
    				return extp;		
 			}
-
+*/
     		function getIconForPlane(plane) {
         		var r = 255, g = 255, b = 0;
         		var maxalt = 40000; /* Max altitude in the average case */
@@ -224,9 +280,9 @@
         		};
 
         		Map = new google.maps.Map(document.getElementById("map_canvas"), mapOptions);
-
-				var startPoint	= sectionMap['1'].start;
-				var endPoint	= sectionMap['1'].end;
+/*
+				var startPoint	= new google.maps.LatLng(CenterLat+1, CenterLon+1);
+				var endPoint	= new google.maps.LatLng(CenterLat-1, CenterLon+2);
 				
 				var arcPts = drawArc(centerPoint, 
 					centerPoint.Bearing(startPoint),
@@ -245,9 +301,9 @@
 					fillOpacity:	0.3,
 					map:			Map
 				});
-
+*/
 				/* Draws concentric circles */
-/*
+
 				for(var city in cityMap) {
 					var circle_1_options = new google.maps.Circle({
 						strokeColor:	'#FF0000',
@@ -261,7 +317,7 @@
 						draggable:		false
 					});
 				}
-*/
+
         		/* Setup our timer to poll from the server. */
         		window.setInterval(function() {
             		fetchData();
