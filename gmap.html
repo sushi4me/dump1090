@@ -46,7 +46,13 @@
 
     	<script type="text/javascript">
 			CenterLat = 34.2016;
-    		CenterLon = -118.4879; 
+    		CenterLon = -118.4879;
+            var centerPoint = new google.maps.LatLng(CenterLat, CenterLon); 
+            var Radar = new Object();
+            Radar.gcs = new google.maps.LatLng(CenterLat, CenterLon);
+            Radar.beamWidth = 30;
+            Radar.range = 37000;
+            Radar.direction = 0;
 			EarthRadiusMeters = 6378137.0; // meters   		
 			Map = null;
 			NumPlanes = 0;
@@ -200,7 +206,7 @@
         		});
     		}
 
-		function drawBeam(center, distance, startAngle, beamWidth) {
+		function getBeamPath(center, distance, startAngle, beamWidth) {
 			var spherical = google.maps.geometry.spherical;
 			var path = [];
 			path.push(center);			
@@ -212,11 +218,9 @@
 		}
 
     		function initialize() {
-				var centerPoint	= new google.maps.LatLng(CenterLat, CenterLon);
-
         		var mapOptions = {
             		center: centerPoint,
-            		zoom: 13,
+            		zoom: 10,
             		mapTypeId: google.maps.MapTypeId.ROADMAP
         		};
 
@@ -239,16 +243,16 @@
 			}
 
 			/* Draw radar beam */
-			var path = drawBeam(centerPoint, radarRange, radarDirection + beamWidth/2, beamWidth);
-			var bermudaTriangle = new google.maps.Polygon({
+			var path = getBeamPath(centerPoint, Radar.range, Radar.direction + Radar.beamWidth/2, Radar.beamWidth);
+			Radar.beamPolygon = new google.maps.Polygon({
 			  paths: path,
 			  strokeColor: '#FF0000',
 			  strokeOpacity: 0.8,
 			  strokeWeight: 2,
 			  fillColor: '#FF0000',
-			  fillOpacity: 0.35
-			});
-			bermudaTriangle.setMap(Map);
+              fillOpacity: 0.35
+            });
+			Radar.beamPolygon.setMap(Map);
 
         		/* Setup our timer to poll from the server. */
         		window.setInterval(function() {
@@ -257,6 +261,18 @@
         		}, 1000);
     		}
 		</script>
+
+        
+        
+        <script type="text/javascript">
+         function changeRadarBeam(){
+            var text=document.getElementById('beamDirection').value;
+            radarDirection = parseInt(text);
+            var path = getBeamPath(centerPoint, radarRange, parseInt(text) + beamWidth/2, beamWidth);
+            Radar.beamPolygon.setPath(path);
+         }
+        </script>
+
 	</head>
 
   	<body onload="initialize()">
@@ -265,7 +281,9 @@
       		<div>
         		<h1>Dump1090</h1>
         		<p id="geninfo"></p>
-        		<p id="selinfo">Click on a plane for info.</p>
+                <p id="geninfo">Radar Beam Direction (0-360 deg): </p>
+                <input type="text" id="beamDirection" onchange="changeRadarBeam()"><br>
+                <p id="selinfo">Click on a plane for info.</p>
       		</div>
     	</div>
 	</body>
