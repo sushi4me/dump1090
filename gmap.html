@@ -48,23 +48,35 @@
 			CenterLat = 34.2016;
     		CenterLon = -118.4879;
             var centerPoint = new google.maps.LatLng(CenterLat, CenterLon); 
-            var Radar = new Object();
-            Radar.gcs = new google.maps.LatLng(CenterLat, CenterLon);
-            Radar.beamWidth = 30;
-            Radar.range = 37000;
-            Radar.direction = 0;
+            
 			EarthRadiusMeters = 6378137.0; // meters   		
 			Map = null;
+			
 			NumPlanes = 0;
     		Planes = {};
+			Selected = null;
 			Radius_1 = 1852;
 			Radius_2 = 9260;
 			Radius_3 = 18520;
 			Radius_4 = 27780;
 			Radius_5 = 37040;
+
+			Runway_1 = 355.5;
+			Runway_2 = 355.5;
+			Runway_3 = 175.5;
+			Runway_4 = 61.1;
+			Runway_5 = 293.999;
+			Runway_6 = 121.1;			
+
+			var Radar = new Object();
+            Radar.gcs = new google.maps.LatLng(CenterLat, CenterLon);
 			beamWidth = 30;
-			radarRange = 37000;
+            Radar.beamWidth = beamWidth;
+			radarRange = Radius_5;
+            Radar.range = radarRange;
 			radarDirection = 0;
+            Radar.direction = radarDirection;
+
     		Selected = null;
 
 			var sectionMap = {};
@@ -128,7 +140,8 @@
     		function refreshGeneralInfo() {
         		var i = document.getElementById('geninfo');
 
-        		i.innerHTML = NumPlanes+' planes on screen.';
+        		i.innerHTML = 	'Tracked planes: ' + NumPlanes + '<br>' +
+								'Radar position: ' + CenterLat + ', ' + CenterLon;
     		}
 
     		function refreshSelectedInfo() {
@@ -206,16 +219,16 @@
         		});
     		}
 
-		function getBeamPath(center, distance, startAngle, beamWidth) {
-			var spherical = google.maps.geometry.spherical;
-			var path = [];
-			path.push(center);			
-			for (i = 0; i < beamWidth; i++) {
-				var temp = spherical.computeOffset(center, distance, startAngle - i);
-				path.push(temp);
+			function getBeamPath(center, distance, startAngle, beamWidth) {
+				var spherical = google.maps.geometry.spherical;
+				var path = [];
+				path.push(center);			
+				for (i = 0; i < beamWidth; i++) {
+					var temp = spherical.computeOffset(center, distance, startAngle - i);
+					path.push(temp);
+				}
+				return path;		
 			}
-			return path;		
-		}
 
     		function initialize() {
         		var mapOptions = {
@@ -226,33 +239,33 @@
 
         		Map = new google.maps.Map(document.getElementById("map_canvas"), mapOptions);
 
-			/* Draws concentric circles */
+				/* Draws concentric circles */
 
-			for(var city in cityMap) {
-				var circle_1_options = new google.maps.Circle({
-					strokeColor:	'#FF0000',
-					strokeOpacity:	0.5,
-					strokeWeight:	4,
-					fillColor:		'#FFFFFF',
-					fillOpacity:	0.0,
-					map:			Map,
-					center:			cityMap[city].center,
-					radius:			cityMap[city].radius,
-					draggable:		false
-				});
-			}
+				for(var city in cityMap) {
+					var circle_1_options = new google.maps.Circle({
+						strokeColor:	'#FF0000',
+						strokeOpacity:	0.5,
+						strokeWeight:	2,
+						fillColor:		'#FFFFFF',
+						fillOpacity:	0.0,
+						map:			Map,
+						center:			cityMap[city].center,
+						radius:			cityMap[city].radius,
+						draggable:		false
+					});
+				}
 
-			/* Draw radar beam */
-			var path = getBeamPath(centerPoint, Radar.range, Radar.direction + Radar.beamWidth/2, Radar.beamWidth);
-			Radar.beamPolygon = new google.maps.Polygon({
-			  paths: path,
-			  strokeColor: '#FF0000',
-			  strokeOpacity: 0.8,
-			  strokeWeight: 2,
-			  fillColor: '#FF0000',
-              fillOpacity: 0.35
-            });
-			Radar.beamPolygon.setMap(Map);
+				/* Draw radar beam */
+				var path = getBeamPath(centerPoint, Radar.range, Radar.direction + Radar.beamWidth/2, Radar.beamWidth);
+				Radar.beamPolygon = new google.maps.Polygon({
+					paths: path,
+			  		strokeColor: '#FF0000',
+			  		strokeOpacity: 0.8,
+			  		strokeWeight: 2,
+			  		fillColor: '#FF0000',
+              		fillOpacity: 0.35
+            	});
+				Radar.beamPolygon.setMap(Map);
 
         		/* Setup our timer to poll from the server. */
         		window.setInterval(function() {
@@ -265,12 +278,40 @@
         
         
         <script type="text/javascript">
-         function changeRadarBeam(){
-            var text=document.getElementById('beamDirection').value;
-            radarDirection = parseInt(text);
-            var path = getBeamPath(centerPoint, radarRange, parseInt(text) + beamWidth/2, beamWidth);
-            Radar.beamPolygon.setPath(path);
-         }
+        	function changeRadarBeam(){
+            	var text=document.getElementById('beamDirection').value;
+            	radarDirection = parseInt(text);
+            	var path = getBeamPath(centerPoint, radarRange, parseInt(text) + beamWidth/2, beamWidth);
+            	Radar.beamPolygon.setPath(path);
+	        }
+
+			function changeRunway(num) {
+				var direction = 0;
+				switch (num) {
+					case 1:
+						direction = Runway_1;
+						break;
+					case 2:
+						direction = Runway_2;
+						break;
+					case 3:
+						direction = Runway_3;
+						break;
+					case 4:
+						direction = Runway_4;
+						break;
+					case 5:
+						direction = Runway_5;
+						break;
+					case 6:
+						direction = Runway_6;
+						break;
+					default:
+						direction = 0;
+				}
+				var path = getBeamPath(centerPoint, radarRange, direction + beamWidth/2, beamWidth);
+				Radar.beamPolygon.setPath(path);
+			}
         </script>
 
 	</head>
@@ -280,10 +321,26 @@
     	<div id="info">
       		<div>
         		<h1>Dump1090</h1>
+
         		<p id="geninfo"></p>
-                <p id="geninfo">Radar Beam Direction (0-360 deg): </p>
-                <input type="text" id="beamDirection" onchange="changeRadarBeam()"><br>
-                <p id="selinfo">Click on a plane for info.</p>
+
+				<form>
+                	<font size="-1">Beam Direction (w.r.t. true North):</font>
+                	<input type="text" id="beamDirection" size="4" onchange="changeRadarBeam()">
+					<br><br>
+				</form>   
+             
+				<font size="-1"><b>Preset Runways</b></font>
+				<br>
+				<input id="Runway_1" type="button" value="1" onclick="changeRunway(1);" />
+				<input id="Runway_2" type="button" value="2" onclick="changeRunway(2);" />
+				<input id="Runway_3" type="button" value="3" onclick="changeRunway(3);" />
+				<br>
+				<input id="Runway_4" type="button" value="4" onclick="changeRunway(4);" />
+				<input id="Runway_5" type="button" value="5" onclick="changeRunway(5);" />
+				<input id="Runway_6" type="button" value="6" onclick="changeRunway(6);" />
+
+				<p id="selinfo">Click on a plane for info.</p>
       		</div>
     	</div>
 	</body>
