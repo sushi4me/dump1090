@@ -27,25 +27,25 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
-#include <stdbool.h>
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
-#include <pthread.h>
-#include <stdint.h>
-#include <errno.h>
-#include <unistd.h>
-#include <math.h>
-#include <sys/time.h>
-#include <signal.h>
-#include <fcntl.h>
 #include <ctype.h>
-#include <sys/stat.h>
+#include <errno.h>
+#include <fcntl.h>
 #include <sys/ioctl.h>
+#include <math.h>
+#include <pthread.h>
 #include <sys/select.h>
-#include "rtl-sdr.h"
+#include <sys/stat.h>
+#include <stdbool.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <signal.h>
+#include <sys/time.h>
+#include <unistd.h>
+
 #include "anet.h"
+#include "rtl-sdr.h"
 
 #define MODES_DEFAULT_RATE         2000000
 #define MODES_DEFAULT_FREQ         1090000000
@@ -99,6 +99,8 @@
 #define HERE_LAT 	34.2016
 #define HERE_LON 	-118.4879
 #define HERE_ALT 	237.744
+
+#define MAX_PATH_NAME_LEN	1024
 
 /* Structure used to describe a networking client. */
 struct client {
@@ -252,6 +254,9 @@ struct modesMessage {
 	int altitude, unit;
 };
 
+char currentFile[MAX_PATH_NAME_LEN];
+int extended = 0;
+
 void interactiveShowData(void);
 struct aircraft* interactiveReceiveData(struct modesMessage *mm);
 void modesSendRawOutput(struct modesMessage *mm);
@@ -380,6 +385,21 @@ void calculate(struct aircraft *a, bool oblate) {
 
 	locationToPoint(locationHere, oblate);
 
+	/* Create a file with time stamp */
+	time_t rawtime;
+	struct tm *timeinfo;
+	struct stat st;	
+	char pathFile[MAX_PATH_NAME_LEN];
+	bool max_file = false;
+
+	time(&rawtime);
+	timeinfo = localtime(&rawtime);
+	sprintf(pathFile, "./logs/%d%d%d_%d",
+			timeinfo->tm_year + 1990,
+			timeinfo->tm_mon + 1,
+			timeinfo->tm_mday,
+			timeinfo->tm_sec);
+
 	while(a) {
 		locationToPoint(a, oblate);
 	
@@ -417,6 +437,49 @@ void calculate(struct aircraft *a, bool oblate) {
 
 			a->elev = 90 - 180/M_PI * acos(norm_x * (a->coordP)->nx + norm_y * (a->coordP)->ny + norm_z * (a->coordP)->nz);
 		}
+
+		/* Write to file */
+		if (strlen(currentFile) > 0) {
+			if (stat(pathFile, &st) == 0) {
+				if (st.st_size >= 8000000)
+					max_file = true;
+			}
+			else
+				fprintf(stderr, "Failed to get the file size.\n");
+		}
+
+		if (strlen(currentFile) == 0 || max_file) {
+			if (stat("./logs", &st) == -1) {
+				mkdir("./logs", 0700);
+			}
+
+			if (max_file) {
+				sprintf(pathFile, "./logs/%d%d%d_%d_ext%d",
+				timeinfo->tm_year + 1990,
+				timeinfo->tm_mon + 1,
+				timeinfo->tm_mday,
+				timeinfo->tm_sec,
+				extended);
+				extended += 1;		
+			}
+			
+			strcpy(currentFile, pathFile);
+		}
+		else
+			extended = 0;
+
+		FILE *f = fopen(pathFile, "a");
+
+		if (f == NULL) {
+			fprintf(stderr, "Not able to create file!");
+			exit(2);		
+		}	
+
+		fprintf(f, "%-6s %-8s %-9d %-7d %-7.2f %-8.2f %-7.2f %-9.2f %-3.2f %-4d  %-9ld\n",
+			a->hexaddr, a->flight, a->altitude, a->speed,
+			a->lat, a->lon, a->azim, a->dist, a->elev, a->track, a->messages);
+
+		fclose(f); 
 
 		a = a->next;
 	}
