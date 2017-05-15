@@ -455,7 +455,7 @@ void calculate(struct aircraft *a, bool oblate) {
 
 			if (max_file) {
 				sprintf(pathFile, "./logs/%d%d%d_%d_ext%d",
-				timeinfo->tm_year + 1990,
+				timeinfo->tm_year + 1900,
 				timeinfo->tm_mon + 1,
 				timeinfo->tm_mday,
 				timeinfo->tm_sec,
