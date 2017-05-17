@@ -2009,6 +2009,9 @@ void interactiveShowData(void) {
 		strcpy(currentFile, pathFile);
 	}
 
+	/* Timestamp the entry */
+	fprintf(f, "%d:%d:%d\n", timeinfo->tm_hour, timeinfo->tm_min, timeinfo->tm_sec);
+
 	memset(progress,' ',3);
 	progress[time(NULL)%3] = '.';
 	progress[3] = '\0';
