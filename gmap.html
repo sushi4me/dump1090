@@ -3,7 +3,7 @@
 <html>
 	<head>
     <meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
-    
+
 	<style type="text/css">
 		html { height: 100% }
 	    body { height: 100%; margin: 0; padding: 0 }
@@ -54,7 +54,8 @@
             
 			EarthRadiusMeters = 6378137.0; // meters   		
 			Map = null;
-			
+			LastUpdated = "May 17, 2017";		
+
 			NumPlanes = 0;
     		Planes = {};
 			Selected = null;
@@ -375,9 +376,21 @@
 
         		<p id="geninfo"></p>
 
-				
-                	<font size="-1">Beam Direction (w.r.t. true North):</font>
-                	<input type="text" id="beamDirection" size="4" default="0" onchange="changeRadarBeam()"><br>
+				<font size="-1">
+					Present beam directions are as follows:
+					<ul>
+						<li>1 - 355.5	</li>
+						<li>2 - 355.5	</li>
+						<li>3 - 175.5	</li>
+						<li>4 - 61.1	</li>
+						<li>5 - 293.999	</li>
+						<li>6 - 121.1	</li>
+					</ul>
+				</font>
+
+                <font size="-1">Beam Direction (w.r.t. true North):</font>
+
+                <input type="text" id="beamDirection" size="4" default="0" onchange="changeRadarBeam()">
 			<br>             
 			<font size="-1"><b>Preset Runways</b></font>
 			<br>
