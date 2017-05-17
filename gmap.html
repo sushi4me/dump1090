@@ -256,16 +256,16 @@
         		});
     		}
 
-			function getBeamPath(center, distance, startAngle, beamWidth) {
-				var spherical = google.maps.geometry.spherical;
-				var path = [];
-				path.push(center);			
-				for (i = 0; i < beamWidth; i++) {
-					var temp = spherical.computeOffset(center, distance, startAngle - i);
-					path.push(temp);
-				}
-				return path;		
+		function getBeamPath(center, distance, startAngle, beamWidth) {
+			var spherical = google.maps.geometry.spherical;
+			var path = [];
+			path.push(center);			
+			for (i = 0; i < beamWidth; i++) {
+				var temp = spherical.computeOffset(center, distance, startAngle - i);
+				path.push(temp);
 			}
+			return path;		
+		}
 
     		function initialize() {
         		var mapOptions = {
@@ -276,47 +276,47 @@
 
         		Map = new google.maps.Map(document.getElementById("map_canvas"), mapOptions);
 
-				/* Draws concentric circles */
-				for(var city in cityMap) {
-					var circle_1_options = new google.maps.Circle({
-						strokeColor:	'#FF0000',
-						strokeOpacity:	0.5,
-						strokeWeight:	2,
-						fillColor:		'#FFFFFF',
-						fillOpacity:	0.0,
-						map:			Map,
-						center:			cityMap[city].center,
-						radius:			cityMap[city].radius,
-						draggable:		false
-					});
+			/* Draws concentric circles */
+			for(var city in cityMap) {
+				var circle_1_options = new google.maps.Circle({
+					strokeColor:	'#FF0000',
+					strokeOpacity:	0.5,
+					strokeWeight:	2,
+					fillColor:		'#FFFFFF',
+					fillOpacity:	0.0,
+					map:			Map,
+					center:			cityMap[city].center,
+					radius:			cityMap[city].radius,
+					draggable:		false
+				});
 /*
-					var circle_1_label = new MapLabel({
-						text:			'Test',
-						position:		new google.maps.LatLng(CenterLat, CenterLon),
-						map:			Map,
-						fontSize:		10,
-						align:			'right'
-					});
+				var circle_1_label = new MapLabel({
+					text:			'Test',
+					position:		new google.maps.LatLng(CenterLat, CenterLon),
+					map:			Map,
+					fontSize:		10,
+					align:			'right'
+				});
 /*
-					mapLabel.set('position', new google.maps.LatLng(34.03, -118.235));
+				mapLabel.set('position', new google.maps.LatLng(34.03, -118.235));
 
-    				var marker = new google.maps.Marker();
-    				marker.bindTo('map', mapLabel);
-    				marker.bindTo('position', mapLabel);
-    				marker.setDraggable(true);*/
-				}
+			var marker = new google.maps.Marker();
+			marker.bindTo('map', mapLabel);
+			marker.bindTo('position', mapLabel);
+			marker.setDraggable(true);*/
+			}
 
-				/* Draw radar beam */
-				var path = getBeamPath(centerPoint, Radar.range, Radar.direction + Radar.beamWidth/2, Radar.beamWidth);
-				Radar.beamPolygon = new google.maps.Polygon({
-					paths: path,
-			  		strokeColor: '#FF0000',
-			  		strokeOpacity: 0.8,
-			  		strokeWeight: 2,
-			  		fillColor: '#FF0000',
+			/* Draw radar beam */
+			var path = getBeamPath(centerPoint, Radar.range, Radar.direction + Radar.beamWidth/2, Radar.beamWidth);
+			Radar.beamPolygon = new google.maps.Polygon({
+				paths: path,
+		  		strokeColor: '#FF0000',
+		  		strokeOpacity: 0.8,
+		  		strokeWeight: 2,
+		  		fillColor: '#FF0000',
               		fillOpacity: 0.35
             	});
-				Radar.beamPolygon.setMap(Map);
+			Radar.beamPolygon.setMap(Map);
 
         		/* Setup our timer to poll from the server. */
         		window.setInterval(function() {
@@ -336,33 +336,33 @@
             	Radar.beamPolygon.setPath(path);
 	        }
 
-			function changeRunway(num) {
-				var direction = 0;
-				switch (num) {
-					case 1:
-						direction = Runway_1;
-						break;
-					case 2:
-						direction = Runway_2;
-						break;
-					case 3:
-						direction = Runway_3;
-						break;
-					case 4:
-						direction = Runway_4;
-						break;
-					case 5:
-						direction = Runway_5;
-						break;
-					case 6:
-						direction = Runway_6;
-						break;
-					default:
-						direction = 0;
-				}
-				var path = getBeamPath(centerPoint, radarRange, direction + beamWidth/2, beamWidth);
-				Radar.beamPolygon.setPath(path);
+		function changeRunway(num) {
+			var direction = 0;
+			switch (num) {
+				case 1:
+					direction = Runway_1;
+					break;
+				case 2:
+					direction = Runway_2;
+					break;
+				case 3:
+					direction = Runway_3;
+					break;
+				case 4:
+					direction = Runway_4;
+					break;
+				case 5:
+					direction = Runway_5;
+					break;
+				case 6:
+					direction = Runway_6;
+					break;
+				default:
+					direction = 0;
 			}
+			var path = getBeamPath(centerPoint, radarRange, direction + beamWidth/2, beamWidth);
+			Radar.beamPolygon.setPath(path);
+		}
         </script>
 
 	</head>
@@ -375,21 +375,19 @@
 
         		<p id="geninfo"></p>
 
-				<form>
+				
                 	<font size="-1">Beam Direction (w.r.t. true North):</font>
-                	<input type="text" id="beamDirection" size="4" default="0" onchange="changeRadarBeam()">
-					<br><br>
-				</form>   
-             
-				<font size="-1"><b>Preset Runways</b></font>
-				<br>
-				<input id="Runway_1" type="button" value="1" onclick="changeRunway(1);" />
-				<input id="Runway_2" type="button" value="2" onclick="changeRunway(2);" />
-				<input id="Runway_3" type="button" value="3" onclick="changeRunway(3);" />
-				<br>
-				<input id="Runway_4" type="button" value="4" onclick="changeRunway(4);" />
-				<input id="Runway_5" type="button" value="5" onclick="changeRunway(5);" />
-				<input id="Runway_6" type="button" value="6" onclick="changeRunway(6);" />
+                	<input type="text" id="beamDirection" size="4" default="0" onchange="changeRadarBeam()"><br>
+			<br>             
+			<font size="-1"><b>Preset Runways</b></font>
+			<br>
+			<input id="Runway_1" type="button" value="1" onclick="changeRunway(1);" />
+			<input id="Runway_2" type="button" value="2" onclick="changeRunway(2);" />
+			<input id="Runway_3" type="button" value="3" onclick="changeRunway(3);" />
+			<br>
+			<input id="Runway_4" type="button" value="4" onclick="changeRunway(4);" />
+			<input id="Runway_5" type="button" value="5" onclick="changeRunway(5);" />
+			<input id="Runway_6" type="button" value="6" onclick="changeRunway(6);" />
 
 				<p id="selinfo">Click on a plane for info.</p>
       		</div>
