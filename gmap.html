@@ -32,6 +32,7 @@
         	font-size:14px;
         	color:#333;
       	}
+		.a {display:inline-block; width: 100px;}
     	</style>
 
     	<script src="//ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js"></script>
@@ -40,9 +41,11 @@
       		src="https://maps.googleapis.com/maps/api/js?sensor=true">
     	</script>
 
-	<script type="text/javascript" 
-		src="http://maps.googleapis.com/maps/api/js?libraries=geometry&sensor=false"> 
-	</script>
+		<script type="text/javascript" 
+			src="http://maps.googleapis.com/maps/api/js?libraries=geometry&sensor=false"> 
+		</script>
+
+		<script src="../src/maplabel-compiled.js"></script>
 
     	<script type="text/javascript">
 			CenterLat = 34.2016;
@@ -69,7 +72,7 @@
 			Runway_6 = 121.1;			
 
 			var Radar = new Object();
-            Radar.gcs = new google.maps.LatLng(CenterLat, CenterLon);
+            Radar.gcs = centerPoint;
 			beamWidth = 30;
             Radar.beamWidth = beamWidth;
 			radarRange = Radius_5;
@@ -87,23 +90,23 @@
 
 			var cityMap = {};
 			cityMap['circle_1'] = {
-				center: new google.maps.LatLng(CenterLat, CenterLon),
+				center: centerPoint,
 				radius: Radius_1 /* meters */
 			};
 			cityMap['circle_2'] = {
-				center: new google.maps.LatLng(CenterLat, CenterLon),
+				center: centerPoint,
 				radius: Radius_2 /* meters */
 			};
 			cityMap['circle_3'] = {
-				center: new google.maps.LatLng(CenterLat, CenterLon),
+				center: centerPoint,
 				radius: Radius_3 /* meters */
 			};
 			cityMap['circle_4'] = {
-				center: new google.maps.LatLng(CenterLat, CenterLon),
+				center: centerPoint,
 				radius: Radius_4 /* meters */
 			};
 			cityMap['circle_5'] = {
-				center: new google.maps.LatLng(CenterLat, CenterLon),
+				center: centerPoint,
 				radius: Radius_5 /* meters */
 			};
 			
@@ -137,11 +140,22 @@
         		refreshSelectedInfo();
     		}
     
+			/* 		NOTES ABOUT FORMATTING
+				
+					* <font size="-1"> ... </font> : sets font size
+					* <span class="a"> ... </span> : aligns fields
+			 */
     		function refreshGeneralInfo() {
         		var i = document.getElementById('geninfo');
 
-        		i.innerHTML = 	'Tracked planes: ' + NumPlanes + '<br>' +
-								'Radar position: ' + CenterLat + ', ' + CenterLon;
+        		i.innerHTML = 	'<font size="-1"><span class="a">Tracked planes: </span>' + 
+								'<span class="b">' +								
+								NumPlanes + 
+								'</span><br>' +
+								'<span class="a">Radar position: </span>' + 
+								'<span class="b">' +
+								CenterLat + ', ' + CenterLon + 
+								'</span></font>';
     		}
 
     		function refreshSelectedInfo() {
@@ -149,16 +163,39 @@
         		var p = Planes[Selected];
 
         		if (!p) return;
-        		var html = 'ICAO: '+p.hex+'<br>';
+        		var html = 	'<font size="-1"><span class="a">ICAO: </span>' + 
+							'<span class="b">' +							
+							p.hex + '</span><br>';
         		if (p.flight.length) {
-            		html += '<b>'+p.flight+'</b><br>';
+            		html += '<span class="a">Flight: </span><b>' + 
+							'<span class="b">' +							
+							p.flight + '</span></b><br>';
         		}
-        		html += 'Distance:  '    + parseFloat(p.dist).toFixed(2) +      ' nautical mi.<br>';
-        		html += 'Azimuth:   '    + parseFloat(p.azim).toFixed(2) +      ' degrees<br>';
-        		html += 'Elevation: '    + parseFloat(p.elev).toFixed(2) +      ' degrees<br>';
-        		html += 'Altitude:  '    + parseFloat(p.altitude).toFixed(2) +  ' feet<br>';
-        		html += 'Speed:     '    + parseFloat(p.speed).toFixed(2) +     ' knots<br>';
-        		html += 'Lat, Lon:  '    + parseFloat(p.lat).toFixed(2) +       ', ' + parseFloat(p.lon).toFixed(2) + '<br>';
+        		html += '<span class="a">Distance: </span>' + 
+						'<span class="b">' + 
+						parseFloat(p.dist).toFixed(2) + 
+						' nautical mi.</span><br>' +
+        				'<span class="a">Azimuth: </span>' + 
+						'<span class="b">' +						
+						parseFloat(p.azim).toFixed(2) +
+						' degrees</span><br>' +
+        				'<span class="a">Elevation: </span>' +
+						'<span class="b">' +
+						parseFloat(p.elev).toFixed(2) +
+						' degrees</span><br>'+
+        				'<span class="a">Altitude: </span>' + 
+						'<span class="b">' +						
+						parseFloat(p.altitude).toFixed(2) + 
+						' feet</span><br>' +
+						'<span class="a">Speed: </span>' + 
+						'<span class="b">' +
+						parseFloat(p.speed).toFixed(2) +
+						' knots</span><br>' +
+						'<span class="a">Lat, Lon: </span>' +
+						'<span class="b">' +						
+						parseFloat(p.lat).toFixed(2) + ', ' + parseFloat(p.lon).toFixed(2) + 
+						'</span></font>';
+
         		i.innerHTML = html;
     		}
 
@@ -240,7 +277,6 @@
         		Map = new google.maps.Map(document.getElementById("map_canvas"), mapOptions);
 
 				/* Draws concentric circles */
-
 				for(var city in cityMap) {
 					var circle_1_options = new google.maps.Circle({
 						strokeColor:	'#FF0000',
@@ -253,6 +289,21 @@
 						radius:			cityMap[city].radius,
 						draggable:		false
 					});
+/*
+					var circle_1_label = new MapLabel({
+						text:			'Test',
+						position:		new google.maps.LatLng(CenterLat, CenterLon),
+						map:			Map,
+						fontSize:		10,
+						align:			'right'
+					});
+/*
+					mapLabel.set('position', new google.maps.LatLng(34.03, -118.235));
+
+    				var marker = new google.maps.Marker();
+    				marker.bindTo('map', mapLabel);
+    				marker.bindTo('position', mapLabel);
+    				marker.setDraggable(true);*/
 				}
 
 				/* Draw radar beam */
@@ -326,7 +377,7 @@
 
 				<form>
                 	<font size="-1">Beam Direction (w.r.t. true North):</font>
-                	<input type="text" id="beamDirection" size="4" onchange="changeRadarBeam()">
+                	<input type="text" id="beamDirection" size="4" default="0" onchange="changeRadarBeam()">
 					<br><br>
 				</form>   
              

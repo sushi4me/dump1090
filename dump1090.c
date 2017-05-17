@@ -255,6 +255,7 @@ struct modesMessage {
 };
 
 char currentFile[MAX_PATH_NAME_LEN];
+char extendedFile[MAX_PATH_NAME_LEN];
 int extended = 0;
 
 void interactiveShowData(void);
@@ -385,21 +386,6 @@ void calculate(struct aircraft *a, bool oblate) {
 
 	locationToPoint(locationHere, oblate);
 
-	/* Create a file with time stamp */
-	time_t rawtime;
-	struct tm *timeinfo;
-	struct stat st;	
-	char pathFile[MAX_PATH_NAME_LEN];
-	bool max_file = false;
-
-	time(&rawtime);
-	timeinfo = localtime(&rawtime);
-	sprintf(pathFile, "./logs/%d%d%d_%d",
-			timeinfo->tm_year + 1990,
-			timeinfo->tm_mon + 1,
-			timeinfo->tm_mday,
-			timeinfo->tm_sec);
-
 	while(a) {
 		locationToPoint(a, oblate);
 	
@@ -437,49 +423,6 @@ void calculate(struct aircraft *a, bool oblate) {
 
 			a->elev = 90 - 180/M_PI * acos(norm_x * (a->coordP)->nx + norm_y * (a->coordP)->ny + norm_z * (a->coordP)->nz);
 		}
-
-		/* Write to file */
-		if (strlen(currentFile) > 0) {
-			if (stat(pathFile, &st) == 0) {
-				if (st.st_size >= 8000000)
-					max_file = true;
-			}
-			else
-				fprintf(stderr, "Failed to get the file size.\n");
-		}
-
-		if (strlen(currentFile) == 0 || max_file) {
-			if (stat("./logs", &st) == -1) {
-				mkdir("./logs", 0700);
-			}
-
-			if (max_file) {
-				sprintf(pathFile, "./logs/%d%d%d_%d_ext%d",
-				timeinfo->tm_year + 1900,
-				timeinfo->tm_mon + 1,
-				timeinfo->tm_mday,
-				timeinfo->tm_sec,
-				extended);
-				extended += 1;		
-			}
-			
-			strcpy(currentFile, pathFile);
-		}
-		else
-			extended = 0;
-
-		FILE *f = fopen(pathFile, "a");
-
-		if (f == NULL) {
-			fprintf(stderr, "Not able to create file!");
-			exit(2);		
-		}	
-
-		fprintf(f, "%-6s %-8s %-9d %-7d %-7.2f %-8.2f %-7.2f %-9.2f %-3.2f %-4d  %-9ld\n",
-			a->hexaddr, a->flight, a->altitude, a->speed,
-			a->lat, a->lon, a->azim, a->dist, a->elev, a->track, a->messages);
-
-		fclose(f); 
 
 		a = a->next;
 	}
@@ -2040,6 +1983,32 @@ void interactiveShowData(void) {
 	char progress[4];
 	int count = 0;
 
+	/* Create a file with time stamp */
+	time_t rawtime;
+	struct tm *timeinfo;
+	struct stat st;	
+	char pathFile[MAX_PATH_NAME_LEN];
+
+	time(&rawtime);
+	timeinfo = localtime(&rawtime);
+
+	/* Next file to be written to if full */
+	sprintf(pathFile, "./logs/%d%d%d_%d%d%d",
+		timeinfo->tm_year + 1900,
+		timeinfo->tm_mon + 1,
+		timeinfo->tm_mday,
+		timeinfo->tm_hour,
+		timeinfo->tm_min,
+		timeinfo->tm_sec);
+
+	/* Logs directory is empty/non-existing, create it */
+	if (strlen(currentFile) == 0) {
+		if (stat("./logs", &st) == -1)
+			mkdir("./logs", 0700);
+	
+		strcpy(currentFile, pathFile);
+	}
+
 	memset(progress,' ',3);
 	progress[time(NULL)%3] = '.';
 	progress[3] = '\0';
@@ -2058,6 +2027,25 @@ void interactiveShowData(void) {
 			altitude /= 3.2828;
 			speed *= 1.852;
 		}
+		
+		/* Check file size */
+		if (strcmp(currentFile, pathFile) != 0)
+			strcpy(currentFile, pathFile);
+
+		FILE *f = fopen(currentFile, "a");
+		if (f == NULL) {
+			fprintf(stderr, "Could not open currentFile!\n");
+			exit(2);
+		}
+
+		fprintf(f, "%-6s %-8s %-9d %-7d %-7.2f %-8.2f %-7.2f %-9.2f %-3.2f %-4d  %-9ld %d sec\n",
+			a->hexaddr, a->flight, altitude, speed,
+			a->lat, a->lon, a->azim, a->dist, a->elev, a->track, a->messages,
+			(int)(now - a->seen));
+
+		fclose(f); 
+
+		/* End of writing to file. */
 
 		printf("%-6s %-8s %-9d %-7d %-7.2f %-8.2f %-7.2f %-9.2f %-3.2f %-4d  %-9ld %d sec\n",
 			a->hexaddr, a->flight, altitude, speed,
