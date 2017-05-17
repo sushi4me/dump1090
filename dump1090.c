@@ -101,6 +101,7 @@
 #define HERE_ALT 	237.744
 
 #define MAX_PATH_NAME_LEN	1024
+#define SIZE_8MB			8000000
 
 /* Structure used to describe a networking client. */
 struct client {
@@ -255,7 +256,6 @@ struct modesMessage {
 };
 
 char currentFile[MAX_PATH_NAME_LEN];
-char extendedFile[MAX_PATH_NAME_LEN];
 int extended = 0;
 
 void interactiveShowData(void);
@@ -1976,6 +1976,16 @@ struct aircraft *interactiveReceiveData(struct modesMessage *mm) {
 	return a;
 }
 
+bool check8MBFile(const char *filename) {
+	struct stat st;
+	
+	if (stat(filename, &st) == 0) 
+		if (st.st_size >= SIZE_8MB)
+			return false;
+
+	return true;
+}
+
 /* EDIT Show the currently captured interactive data on screen. */
 void interactiveShowData(void) {
 	struct aircraft *a = Modes.aircrafts;
@@ -2010,7 +2020,15 @@ void interactiveShowData(void) {
 	}
 
 	/* Timestamp the entry */
-	fprintf(f, "%d:%d:%d\n", timeinfo->tm_hour, timeinfo->tm_min, timeinfo->tm_sec);
+	if (check8MBFile(currentFile)) {
+		FILE *fp = fopen(currentFile, "a");
+		if (fp == NULL) {
+			fprintf(stderr, "Could not open currentFile!\n");
+			exit(2);
+		}
+		fprintf(fp, "%d:%d:%d\n", timeinfo->tm_hour, timeinfo->tm_min, timeinfo->tm_sec);
+		fclose(fp);
+	}
 
 	memset(progress,' ',3);
 	progress[time(NULL)%3] = '.';
@@ -2032,21 +2050,55 @@ void interactiveShowData(void) {
 		}
 		
 		/* Check file size */
-		if (strcmp(currentFile, pathFile) != 0)
-			strcpy(currentFile, pathFile);
-
-		FILE *f = fopen(currentFile, "a");
-		if (f == NULL) {
-			fprintf(stderr, "Could not open currentFile!\n");
-			exit(2);
+		if (check8MBFile(currentFile)) {
+			FILE *fp = fopen(currentFile, "a");
+			if (fp == NULL) {
+				fprintf(stderr, "Could not open currentFile!\n");
+				exit(2);
+			}
+			fprintf(fp, "%-6s %-8s %-9d %-7d %-7.2f %-8.2f %-7.2f %-9.2f %-3.2f %-4d  %-9ld %d sec\n",
+				a->hexaddr, a->flight, altitude, speed,
+				a->lat, a->lon, a->azim, a->dist, a->elev, a->track, a->messages,
+				(int)(now - a->seen));
+			fclose(fp);
 		}
+		else {
+			if (strcmp(currentFile, pathFile) == 0) {
+				extended = 0;
 
-		fprintf(f, "%-6s %-8s %-9d %-7d %-7.2f %-8.2f %-7.2f %-9.2f %-3.2f %-4d  %-9ld %d sec\n",
-			a->hexaddr, a->flight, altitude, speed,
-			a->lat, a->lon, a->azim, a->dist, a->elev, a->track, a->messages,
-			(int)(now - a->seen));
+				sprintf(pathFile, "./logs/%d%d%d_%d%d%d_ext1",
+					timeinfo->tm_year + 1900,
+					timeinfo->tm_mon + 1,
+					timeinfo->tm_mday,
+					timeinfo->tm_hour,
+					timeinfo->tm_min,
+					timeinfo->tm_sec);
+			}
+			else if (strstr(currentFile, "ext") != NULL) {
+				extended += 1;
 
-		fclose(f); 
+				sprintf(pathFile, "./logs/%d%d%d_%d%d%d_ext%d",
+					timeinfo->tm_year + 1900,
+					timeinfo->tm_mon + 1,
+					timeinfo->tm_mday,
+					timeinfo->tm_hour,
+					timeinfo->tm_min,
+					timeinfo->tm_sec,
+					extended);
+			}
+
+			strcpy(currentFile, pathFile);
+			FILE *fp = fopen(currentFile, "a");
+			if (fp == NULL) {
+				fprintf(stderr, "Could not open currentFile!\n");
+				exit(2);
+			}
+			fprintf(fp, "%-6s %-8s %-9d %-7d %-7.2f %-8.2f %-7.2f %-9.2f %-3.2f %-4d  %-9ld %d sec\n",
+				a->hexaddr, a->flight, altitude, speed,
+				a->lat, a->lon, a->azim, a->dist, a->elev, a->track, a->messages,
+				(int)(now - a->seen));
+			fclose(fp);
+		}
 
 		/* End of writing to file. */
 
