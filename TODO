@@ -1,7 +1,5 @@
-New Edits -- May 9, 2017
+New Edits -- May 17, 2017
 
-* Edit C files to enable two new columns for elevation and azimuth.
+* Connect computer to NTP server & sync.
 
-* Edit HTML files to enable elevation and azimuth to be displayed.
-
-* Radar display and angle of detection in HTML.
+* Check for "2nd transition" bit.
