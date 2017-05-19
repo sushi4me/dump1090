@@ -14,5 +14,12 @@ dump1090: dump1090.o anet.o
 run:
 	./dump1090 --net --interactive
 
+get:
+	@read -p "Flight no.: " flt; \
+	cat ./logs/* | grep -w $$flt - > $$flt.log;
+
 clean:
 	rm -f *.o dump1090
+
+clean_logs:
+	rm -rf logs *.log
