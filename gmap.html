@@ -290,21 +290,6 @@
 					radius:			cityMap[city].radius,
 					draggable:		false
 				});
-/*
-				var circle_1_label = new MapLabel({
-					text:			'Test',
-					position:		new google.maps.LatLng(CenterLat, CenterLon),
-					map:			Map,
-					fontSize:		10,
-					align:			'right'
-				});
-/*
-				mapLabel.set('position', new google.maps.LatLng(34.03, -118.235));
-
-			var marker = new google.maps.Marker();
-			marker.bindTo('map', mapLabel);
-			marker.bindTo('position', mapLabel);
-			marker.setDraggable(true);*/
 			}
 
 			/* Draw radar beam */
@@ -337,33 +322,33 @@
             	Radar.beamPolygon.setPath(path);
 	        }
 
-		function changeRunway(num) {
-			var direction = 0;
-			switch (num) {
-				case 1:
-					direction = Runway_1;
-					break;
-				case 2:
-					direction = Runway_2;
-					break;
-				case 3:
-					direction = Runway_3;
-					break;
-				case 4:
-					direction = Runway_4;
-					break;
-				case 5:
-					direction = Runway_5;
-					break;
-				case 6:
-					direction = Runway_6;
-					break;
-				default:
-					direction = 0;
+			function changeRunway(num) {
+				var direction = 0;
+				switch (num) {
+					case 1:
+						direction = Runway_1;
+						break;
+					case 2:
+						direction = Runway_2;
+						break;
+					case 3:
+						direction = Runway_3;
+						break;
+					case 4:
+						direction = Runway_4;
+						break;
+					case 5:
+						direction = Runway_5;
+						break;
+					case 6:
+						direction = Runway_6;
+						break;
+					default:
+						direction = 0;
+				}
+				var path = getBeamPath(centerPoint, radarRange, direction + beamWidth/2, beamWidth);
+				Radar.beamPolygon.setPath(path);
 			}
-			var path = getBeamPath(centerPoint, radarRange, direction + beamWidth/2, beamWidth);
-			Radar.beamPolygon.setPath(path);
-		}
         </script>
 
 	</head>
@@ -402,7 +387,7 @@
 			<input id="Runway_5" type="button" value="5" onclick="changeRunway(5);" />
 			<input id="Runway_6" type="button" value="6" onclick="changeRunway(6);" />
 
-				<p id="selinfo">Click on a plane for info.</p>
+			<p id="selinfo">Click on a plane for info.</p>
       		</div>
     	</div>
 	</body>

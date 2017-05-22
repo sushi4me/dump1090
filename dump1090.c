@@ -187,6 +187,7 @@ struct {
 	int interactive;                /* Interactive mode */
 	int interactive_rows;           /* Interactive mode: max number of rows. */
 	int interactive_ttl;            /* Interactive mode: TTL before deletion. */
+	int log;
 	int stats;                      /* Print stats at exit in --ifile mode. */
 	int onlyaddr;                   /* Print only ICAO addresses. */
 	int metric;                     /* Use metric units. */
@@ -440,6 +441,7 @@ void modesInitConfig(void) {
 	Modes.raw = 0;
 	Modes.net = 0;
 	Modes.net_only = 0;
+	Modes.log = 0;
 	Modes.onlyaddr = 0;
 	Modes.debug = 0;
 	Modes.interactive = 0;
@@ -2011,7 +2013,7 @@ void interactiveShowData(void) {
 		timeinfo->tm_sec);
 
 	/* Logs directory is empty/non-existing, create it */
-	if (strlen(currentFile) == 0) {
+	if (Modes.log && strlen(currentFile) == 0) {
 		if (stat("./logs", &st) == -1)
 			mkdir("./logs", 0700);
 	
@@ -2019,7 +2021,7 @@ void interactiveShowData(void) {
 	}
 
 	/* Timestamp the entry */
-	if (check8MBFile(currentFile)) {
+	if (Modes.log && check8MBFile(currentFile)) {
 		FILE *fp = fopen(currentFile, "a");
 		if (fp == NULL) {
 			fprintf(stderr, "Could not open currentFile!\n");
@@ -2049,54 +2051,56 @@ void interactiveShowData(void) {
 		}
 		
 		/* Check file size */
-		if (check8MBFile(currentFile)) {
-			FILE *fp = fopen(currentFile, "a");
-			if (fp == NULL) {
-				fprintf(stderr, "Could not open currentFile!\n");
-				exit(2);
+		if (Modes.log) {
+			if (check8MBFile(currentFile)) {
+				FILE *fp = fopen(currentFile, "a");
+				if (fp == NULL) {
+					fprintf(stderr, "Could not open currentFile!\n");
+					exit(2);
+				}
+				fprintf(fp, "%-6s %-8s %-9d %-7d %-7.2f %-8.2f %-7.2f %-9.2f %-3.2f %-4d  %-9ld %d sec\n",
+					a->hexaddr, a->flight, altitude, speed,
+					a->lat, a->lon, a->azim, a->dist, a->elev, a->track, a->messages,
+					(int)(now - a->seen));
+				fclose(fp);
 			}
-			fprintf(fp, "%-6s %-8s %-9d %-7d %-7.2f %-8.2f %-7.2f %-9.2f %-3.2f %-4d  %-9ld %d sec\n",
-				a->hexaddr, a->flight, altitude, speed,
-				a->lat, a->lon, a->azim, a->dist, a->elev, a->track, a->messages,
-				(int)(now - a->seen));
-			fclose(fp);
-		}
-		else {
-			if (strcmp(currentFile, pathFile) == 0) {
-				extended = 0;
+			else {
+				if (strcmp(currentFile, pathFile) == 0) {
+					extended = 0;
 
-				sprintf(pathFile, "./logs/%d%d%d_%d%d%d_ext1",
-					timeinfo->tm_year + 1900,
-					timeinfo->tm_mon + 1,
-					timeinfo->tm_mday,
-					timeinfo->tm_hour,
-					timeinfo->tm_min,
-					timeinfo->tm_sec);
-			}
-			else if (strstr(currentFile, "ext") != NULL) {
-				extended += 1;
+					sprintf(pathFile, "./logs/%d%d%d_%d%d%d_ext1",
+						timeinfo->tm_year + 1900,
+						timeinfo->tm_mon + 1,
+						timeinfo->tm_mday,
+						timeinfo->tm_hour,
+						timeinfo->tm_min,
+						timeinfo->tm_sec);
+				}
+				else if (strstr(currentFile, "ext") != NULL) {
+					extended += 1;
 
-				sprintf(pathFile, "./logs/%d%d%d_%d%d%d_ext%d",
-					timeinfo->tm_year + 1900,
-					timeinfo->tm_mon + 1,
-					timeinfo->tm_mday,
-					timeinfo->tm_hour,
-					timeinfo->tm_min,
-					timeinfo->tm_sec,
-					extended);
-			}
+					sprintf(pathFile, "./logs/%d%d%d_%d%d%d_ext%d",
+						timeinfo->tm_year + 1900,
+						timeinfo->tm_mon + 1,
+						timeinfo->tm_mday,
+						timeinfo->tm_hour,
+						timeinfo->tm_min,
+						timeinfo->tm_sec,
+						extended);
+				}
 
-			strcpy(currentFile, pathFile);
-			FILE *fp = fopen(currentFile, "a");
-			if (fp == NULL) {
-				fprintf(stderr, "Could not open currentFile!\n");
-				exit(2);
+				strcpy(currentFile, pathFile);
+				FILE *fp = fopen(currentFile, "a");
+				if (fp == NULL) {
+					fprintf(stderr, "Could not open currentFile!\n");
+					exit(2);
+				}
+				fprintf(fp, "%-6s %-8s %-9d %-7d %-7.2f %-8.2f %-7.2f %-9.2f %-3.2f %-4d  %-9ld %d sec\n",
+					a->hexaddr, a->flight, altitude, speed,
+					a->lat, a->lon, a->azim, a->dist, a->elev, a->track, a->messages,
+					(int)(now - a->seen));
+				fclose(fp);
 			}
-			fprintf(fp, "%-6s %-8s %-9d %-7d %-7.2f %-8.2f %-7.2f %-9.2f %-3.2f %-4d  %-9ld %d sec\n",
-				a->hexaddr, a->flight, altitude, speed,
-				a->lat, a->lon, a->azim, a->dist, a->elev, a->track, a->messages,
-				(int)(now - a->seen));
-			fclose(fp);
 		}
 
 		/* End of writing to file. */
@@ -2787,6 +2791,8 @@ int main(int argc, char **argv) {
 		} else if (!strcmp(argv[j],"--net-only")) {
 			Modes.net = 1;
 			Modes.net_only = 1;
+		} else if (!strcmp(argv[j], "--log")) {
+			Modes.log = 1;
 		} else if (!strcmp(argv[j],"--net-ro-port") && more) {
 			modesNetServices[MODES_NET_SERVICE_RAWO].port = atoi(argv[++j]);
 		} else if (!strcmp(argv[j],"--net-ri-port") && more) {
