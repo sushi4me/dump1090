@@ -346,6 +346,7 @@
 					default:
 						direction = 0;
 				}
+				document.getElementById('beamDirection').value = direction;
 				var path = getBeamPath(centerPoint, radarRange, direction + beamWidth/2, beamWidth);
 				Radar.beamPolygon.setPath(path);
 			}
