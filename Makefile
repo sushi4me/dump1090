@@ -11,7 +11,7 @@ all: dump1090
 dump1090: dump1090.o anet.o
 	$(CC) -g -o dump1090 dump1090.o anet.o $(LDFLAGS) $(LDLIBS)
 
-run:
+run: dump1090
 	./dump1090 --net --interactive --log
 
 get:
