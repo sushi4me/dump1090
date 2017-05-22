@@ -131,6 +131,7 @@ struct aircraft {
 	int speed;          /* Velocity computed from EW and NS components. */
 	int track;          /* Angle of flight. */
 	time_t seen;        /* Time at which the last packet was received. */
+	char time_stamp[64];/* Time stamp of packet arrival. */
 	long messages;      /* Number of Mode S messages received. */
 	/* Encoded latitude and longitude as extracted by odd and even
 	 * CPR encoded messages. */
@@ -187,7 +188,8 @@ struct {
 	int interactive;                /* Interactive mode */
 	int interactive_rows;           /* Interactive mode: max number of rows. */
 	int interactive_ttl;            /* Interactive mode: TTL before deletion. */
-	int log;
+	int log;						/* Enable logging to a directory. */
+	int precision;					/* Enable microseconds to be displayed/recorded. */
 	int stats;                      /* Print stats at exit in --ifile mode. */
 	int onlyaddr;                   /* Print only ICAO addresses. */
 	int metric;                     /* Use metric units. */
@@ -259,7 +261,7 @@ char currentFile[MAX_PATH_NAME_LEN];
 int extended = 0;
 
 void interactiveShowData(void);
-struct aircraft* interactiveReceiveData(struct modesMessage *mm);
+struct aircraft* interactiveReceiveData(struct modesMessage *mm, char *buf);
 void modesSendRawOutput(struct modesMessage *mm);
 void modesSendSBSOutput(struct modesMessage *mm, struct aircraft *a);
 void useModesMessage(struct modesMessage *mm);
@@ -442,6 +444,7 @@ void modesInitConfig(void) {
 	Modes.net = 0;
 	Modes.net_only = 0;
 	Modes.log = 0;
+	Modes.precision = 0;
 	Modes.onlyaddr = 0;
 	Modes.debug = 0;
 	Modes.interactive = 0;
@@ -1715,11 +1718,24 @@ good_preamble:
  * Basically this function passes a raw message to the upper layers for
  * further processing and visualization. */
 void useModesMessage(struct modesMessage *mm) {
+	struct timeval tv;
+	struct tm *nowtm;
+	char tmbuf[64], buf[64];
+	
+	/* Get timestamp for message */
+	gettimeofday(&tv, NULL);
+	nowtm = localtime((time_t *)&tv.tv_sec);
+	strftime(tmbuf, sizeof(tmbuf), "%Y-%m-%d %H:%M:%S", nowtm);
+	if (Modes.precision)
+		snprintf(buf, sizeof(buf), "%s.%06ld", tmbuf, tv.tv_usec);
+	else
+		strcpy(buf, tmbuf);
+
 	if (!Modes.stats && (Modes.check_crc == 0 || mm->crcok)) {
 		/* Track aircrafts in interactive mode or if the HTTP
 		 * interface is enabled. */
 		if (Modes.interactive || Modes.stat_http_requests > 0 || Modes.stat_sbs_connections > 0) {
-			struct aircraft *a = interactiveReceiveData(mm);
+			struct aircraft *a = interactiveReceiveData(mm, buf);
 			if (a && Modes.stat_sbs_connections > 0) modesSendSBSOutput(mm, a);  /* Feed SBS output clients. */
 		}
 		/* In non-interactive way, display messages on standard output. */
@@ -1911,7 +1927,7 @@ void decodeCPR(struct aircraft *a) {
 }
 
 /* Receive new messages and populate the interactive mode with more info. */
-struct aircraft *interactiveReceiveData(struct modesMessage *mm) {
+struct aircraft *interactiveReceiveData(struct modesMessage *mm, char *buf) {
 	uint32_t addr;
 	struct aircraft *a, *aux;
 
@@ -1943,6 +1959,7 @@ struct aircraft *interactiveReceiveData(struct modesMessage *mm) {
 		}
 	}
 
+	strcpy(a->time_stamp, buf);
 	a->seen = time(NULL);
 	a->messages++;
 
@@ -1990,27 +2007,27 @@ bool check8MBFile(const char *filename) {
 /* EDIT Show the currently captured interactive data on screen. */
 void interactiveShowData(void) {
 	struct aircraft *a = Modes.aircrafts;
-	time_t now = time(NULL);
+	//time_t now = time(NULL);
 	char progress[4];
+	char divider[123];
 	int count = 0;
 
 	/* Create a file with time stamp */
-	time_t rawtime;
-	struct tm *timeinfo;
+	struct timeval tv;
+	time_t nowtime;
+	struct tm *nowtm;
+	char tmbuf[64];
+
+	gettimeofday(&tv, NULL);
+	nowtime = tv.tv_sec;
+	nowtm = localtime(&nowtime);
+	strftime(tmbuf, sizeof tmbuf, "%Y%m%d_%H:%M:%S", nowtm);	
+	
 	struct stat st;	
 	char pathFile[MAX_PATH_NAME_LEN];
 
-	time(&rawtime);
-	timeinfo = localtime(&rawtime);
-
 	/* Next file to be written to if full */
-	sprintf(pathFile, "./logs/%d%d%d_%d%d%d",
-		timeinfo->tm_year + 1900,
-		timeinfo->tm_mon + 1,
-		timeinfo->tm_mday,
-		timeinfo->tm_hour,
-		timeinfo->tm_min,
-		timeinfo->tm_sec);
+	sprintf(pathFile, "./logs/%s", tmbuf);
 
 	/* Logs directory is empty/non-existing, create it */
 	if (Modes.log && strlen(currentFile) == 0) {
@@ -2020,26 +2037,24 @@ void interactiveShowData(void) {
 		strcpy(currentFile, pathFile);
 	}
 
-	/* Timestamp the entry */
-	if (Modes.log && check8MBFile(currentFile)) {
-		FILE *fp = fopen(currentFile, "a");
-		if (fp == NULL) {
-			fprintf(stderr, "Could not open currentFile!\n");
-			exit(2);
-		}
-		fprintf(fp, "%d:%d:%d\n", timeinfo->tm_hour, timeinfo->tm_min, timeinfo->tm_sec);
-		fclose(fp);
-	}
-
 	memset(progress,' ',3);
 	progress[time(NULL)%3] = '.';
 	progress[3] = '\0';
 
+	if (Modes.precision) {
+		memset(divider, '-', 122);
+		divider[122] = '\0';
+	}
+	else {
+		memset(divider, '-', 115);
+		divider[115] = '\0';	
+	}
+
 	printf("\x1b[H\x1b[2J");    /* Clear the screen */
 	printf(
-"Hex    Flight   Altitude  Speed   Lat     Lon      Azimuth Dist      Elv   Track Messages  Seen%s\n"
-"---------------------------------------------------------------------------------------------------\n",
-		progress);
+		"Hex    Flight   Altitude  Speed   Lat     Lon      Azimuth Dist      Elv\tTrack Messages  Seen%s\n"
+		"%s\n",
+		progress, divider);
 
 	while(a && count < Modes.interactive_rows) {
 		int altitude = a->altitude, speed = a->speed;
@@ -2058,35 +2073,22 @@ void interactiveShowData(void) {
 					fprintf(stderr, "Could not open currentFile!\n");
 					exit(2);
 				}
-				fprintf(fp, "%-6s %-8s %-9d %-7d %-7.2f %-8.2f %-7.2f %-9.2f %-3.2f %-4d  %-9ld %d sec\n",
+				fprintf(fp, "%-6s %-8s %-9d %-7d %-7.2f %-8.2f %-7.2f %-9.2f %-4.2f %-4d  %-9ld %s \n",
 					a->hexaddr, a->flight, altitude, speed,
 					a->lat, a->lon, a->azim, a->dist, a->elev, a->track, a->messages,
-					(int)(now - a->seen));
+					a->time_stamp);
 				fclose(fp);
 			}
 			else {
 				if (strcmp(currentFile, pathFile) == 0) {
 					extended = 0;
 
-					sprintf(pathFile, "./logs/%d%d%d_%d%d%d_ext1",
-						timeinfo->tm_year + 1900,
-						timeinfo->tm_mon + 1,
-						timeinfo->tm_mday,
-						timeinfo->tm_hour,
-						timeinfo->tm_min,
-						timeinfo->tm_sec);
+					sprintf(pathFile, "./logs/%s_ext1", tmbuf);
 				}
 				else if (strstr(currentFile, "ext") != NULL) {
 					extended += 1;
 
-					sprintf(pathFile, "./logs/%d%d%d_%d%d%d_ext%d",
-						timeinfo->tm_year + 1900,
-						timeinfo->tm_mon + 1,
-						timeinfo->tm_mday,
-						timeinfo->tm_hour,
-						timeinfo->tm_min,
-						timeinfo->tm_sec,
-						extended);
+					sprintf(pathFile, "./logs/%s_ext%d", tmbuf, extended);
 				}
 
 				strcpy(currentFile, pathFile);
@@ -2095,20 +2097,27 @@ void interactiveShowData(void) {
 					fprintf(stderr, "Could not open currentFile!\n");
 					exit(2);
 				}
-				fprintf(fp, "%-6s %-8s %-9d %-7d %-7.2f %-8.2f %-7.2f %-9.2f %-3.2f %-4d  %-9ld %d sec\n",
+				fprintf(fp, "%-6s %-8s %-9d %-7d %-7.2f %-8.2f %-7.2f %-9.2f %-3.2f %-4d  %-9ld %s \n",
 					a->hexaddr, a->flight, altitude, speed,
 					a->lat, a->lon, a->azim, a->dist, a->elev, a->track, a->messages,
-					(int)(now - a->seen));
+					a->time_stamp);
 				fclose(fp);
 			}
 		}
 
 		/* End of writing to file. */
 
+		printf("%-6s %-8s %-9d %-7d %-7.2f %-8.2f %-7.2f %-9.2f %-3.2f\t%-4d  %-9ld %s \n",
+			a->hexaddr, a->flight, altitude, speed,
+			a->lat, a->lon, a->azim, a->dist, a->elev, a->track, a->messages,
+			a->time_stamp);
+
+		/*
 		printf("%-6s %-8s %-9d %-7d %-7.2f %-8.2f %-7.2f %-9.2f %-3.2f %-4d  %-9ld %d sec\n",
 			a->hexaddr, a->flight, altitude, speed,
 			a->lat, a->lon, a->azim, a->dist, a->elev, a->track, a->messages,
 			(int)(now - a->seen));
+		*/
 		a = a->next;
 		count++;
 	}
@@ -2793,6 +2802,8 @@ int main(int argc, char **argv) {
 			Modes.net_only = 1;
 		} else if (!strcmp(argv[j], "--log")) {
 			Modes.log = 1;
+		} else if (!strcmp(argv[j], "--precision")) {
+			Modes.precision = 1;
 		} else if (!strcmp(argv[j],"--net-ro-port") && more) {
 			modesNetServices[MODES_NET_SERVICE_RAWO].port = atoi(argv[++j]);
 		} else if (!strcmp(argv[j],"--net-ri-port") && more) {
