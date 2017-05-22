@@ -3,18 +3,18 @@ Dump1090 README
 
 Commands
 ---
-make: Compiles the project.
+Through Makefile, the following commands are available:
 
-make run: Executes the project (should follow a 'make' command) with '--net 
+Command			| Description
+----------------|-------------
+make 	   		| Compiles the project.
+make run   		| Executes the project (should follow a 'make' command) with '--net 
 --interactice --log' options.
-
-make get: Requests for the full flight number, will generate a log file in the
+make get   		| Requests for the full flight number, will generate a log file in the
 current directory with the grep'd information.  This command will pull lines
 from the current logs within the logs directory.
-
-make clean: Removes compiled files.
-
-make clean_logs: Removes the logs directory and any logs generated using
+make clean 		| Removes compiled files.
+make clean_logs | Removes the logs directory and any logs generated using
 'make get'.
 
 General Info
