@@ -14,6 +14,16 @@ make clean 		| Removes compiled files.
 make clean_logs | Removes the logs directory and any logs generated using 'make get'.
 make install	| Installs required packages for this application - libusb, librtlsdr.
 
+TODO List
+---
+
+- [x] Edit HTML to include extra fields - longitude, latitude, elevation, azimuth.
+- [x] Enable logging (8 MB files) and time stamping upon received ADS-B message.
+- [x] Allow grep functionality through command (e.g. make get).
+- [x] Nautical mile distances from center position.
+- [x] Adjustable beam width, with track presets.
+- [ ] Synchronization/Testing with NTP server.
+
 General Info
 ---
 
@@ -42,11 +52,6 @@ While from time to time I still add / fix stuff in my fork, I target
 minimalism of the implementation. However there is a
 [much more feature complete fork](https://github.com/MalcolmRobb/dump1090)
 available, developed by MalcolmRobb.
-
-Installation
----
-
-Type "make".
 
 Normal usage
 ---
