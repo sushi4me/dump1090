@@ -16,9 +16,9 @@ make install	| Installs required packages for this application - libusb, librtls
 
 TODO List
 ---
-
-- [x] Edit HTML to include extra fields - longitude, latitude, elevation, azimuth.
-- [x] Enable logging (8 MB files) and time stamping upon received ADS-B message.
+* HTML
+	* - [x] Edit HTML to include extra fields - longitude, latitude, elevation, azimuth.
+	* - [x] Enable logging (8 MB files) and time stamping upon received ADS-B message.
 - [x] Allow grep functionality through command (e.g. make get).
 - [x] Nautical mile distances from center position.
 - [x] Adjustable beam width, with track presets.
