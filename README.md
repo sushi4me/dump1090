@@ -12,6 +12,7 @@ make run   		| Executes the project with '--net --interactice --log' options; wi
 make get   		| Requests for the full flight number, will generate a log file in the current directory with the grep'd information.  This command will pull lines from the current logs within the logs directory.
 make clean 		| Removes compiled files.
 make clean_logs | Removes the logs directory and any logs generated using 'make get'.
+make install	| Installs required packages for this application - libusb, librtlsdr.
 
 General Info
 ---
