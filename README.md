@@ -17,12 +17,24 @@ make install	| Installs required packages for this application - libusb, librtls
 TODO List
 ---
 * HTML
-	* - [x] Edit HTML to include extra fields - longitude, latitude, elevation, azimuth.
-	* - [x] Enable logging (8 MB files) and time stamping upon received ADS-B message.
-- [x] Allow grep functionality through command (e.g. make get).
-- [x] Nautical mile distances from center position.
-- [x] Adjustable beam width, with track presets.
-- [ ] Synchronization/Testing with NTP server.
+	- [x] Edit HTML to include extra fields - azimuth, distance, and elevation.
+	- [x] Nautical mile distances from center position.
+	- [x] Adjustable beam width, with track presets.
+
+* C program
+	- [x] Enable logging and time stamping of messages.
+	- [x] Calculate azimuth, distance, and elevation.
+
+* Makefile
+	- [x] Install dependent libraries (libusb, librtlsdr).
+	- [x] Clean and clean logs command.
+	- [x] Pseudo filter command which grep's for a flight number into a new log file.
+
+* Testing
+	- [x] Display graphics in HTML (beam width, nautical mile circles).
+	- [x] Logging files.
+	- [x] Extract from log files a specific flight number.
+	- [ ] Synchronization/Testing with NTP server.
 
 General Info
 ---
