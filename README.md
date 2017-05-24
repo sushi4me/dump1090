@@ -38,7 +38,7 @@ other options not necessary for this specific usage of '--interactive --net
 	- [x] Display graphics in HTML (beam width, nautical mile circles).
 	- [x] Logging files.
 	- [x] Extract from log files a specific flight number.
-	- [ ] Synchronization/Testing with NTP server.
+	- [ ] Connect to NTP server for time stamps, ntpd should take care of drift in clock.
 
 # Original README
 
