@@ -18,12 +18,13 @@ dump1090: dump1090.o anet.o
 	$(CC) -g -o dump1090 dump1090.o anet.o $(LDFLAGS) $(LDLIBS)
 
 get:
-	@read -p "Flight no.: " flt; \
+	@read -p "Enter a flight no.: " flt; \
 	cat ./logs/* | grep -w $$flt - > $$flt.log;
 
 install:
 	@sudo apt-get install librtlsdr-dev
 	@sudo apt-get install libusb-1.0-0-dev
+	@sudo apt-get install ntp
 
 run: dump1090
 	./dump1090 --net --interactive --log

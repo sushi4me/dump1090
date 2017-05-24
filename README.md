@@ -1,8 +1,8 @@
-Dump1090 README
-===
+#Dump1090 README
 
-Commands
----
+
+##Commands
+
 Through Makefile, the following commands are available:
 
 Command			| Description
@@ -12,10 +12,10 @@ make run   		| Executes the project with '--net --interactice --log' options; wi
 make get   		| Requests for the full flight number, will generate a log file in the current directory with the grep'd information.  This command will pull lines from the current logs within the logs directory.
 make clean 		| Removes compiled files.
 make clean_logs | Removes the logs directory and any logs generated using 'make get'.
-make install	| Installs required packages for this application - libusb, librtlsdr.
+make install	| Installs required packages for this application - libusb, librtlsdr, ntp.
 
-TODO List
----
+##TODO List
+
 * HTML
 	- [x] Edit HTML to include extra fields - azimuth, distance, and elevation.
 	- [x] Nautical mile distances from center position.
@@ -36,8 +36,9 @@ TODO List
 	- [x] Extract from log files a specific flight number.
 	- [ ] Synchronization/Testing with NTP server.
 
-General Info
----
+#Original README
+
+##General Info
 
 Dump 1090 is a Mode S decoder specifically designed for RTLSDR devices.
 
@@ -65,8 +66,7 @@ minimalism of the implementation. However there is a
 [much more feature complete fork](https://github.com/MalcolmRobb/dump1090)
 available, developed by MalcolmRobb.
 
-Normal usage
----
+##Normal usage
 
 To capture traffic directly from your RTL device and show the captured traffic
 on standard output, just run the program without options at all:
@@ -91,8 +91,7 @@ In interactive mode it is possible to have a less information dense but more
 all the recently seen aircrafts with some additional information such as
 altitude and flight number, extracted from the received Mode S packets.
 
-Using files as source of data
----
+##Using files as source of data
 
 To decode data from file, use:
 
@@ -110,8 +109,7 @@ as it is able to select the highest gain supported automatically.
 It is possible to feed the program with data via standard input using
 the --ifile option with "-" as argument.
 
-Additional options
----
+##Additional options
 
 Dump1090 can be called with other command line options to set a different
 gain, frequency, and so forth. For a list of options use:
@@ -121,8 +119,7 @@ gain, frequency, and so forth. For a list of options use:
 Everything is not documented here should be obvious, and for most users calling
 it without arguments at all is the best thing to do.
 
-Reliability
----
+##Reliability
 
 By default Dump1090 tries to fix single bit errors using the checksum.
 Basically the program will try to flip every bit of the message and check if
@@ -132,8 +129,7 @@ This is indeed able to fix errors and works reliably in my experience,
 however if you are interested in very reliable data I suggest to use
 the --no-fix command line switch in order to disable error fixing.
 
-Performances and sensibility of detection
----
+##Performances and sensibility of detection
 
 In my limited experience Dump1090 was able to decode a big number of messages
 even in conditions where I encountered problems using other programs, however
@@ -144,15 +140,13 @@ If you can capture traffic that Dump1090 is not able to decode properly, drop
 me an email with a download link. I may try to improve the detection during
 my free time (this is just an hobby project).
 
-Network server features
----
+##Network server features
 
 By enabling the networking support with --net Dump1090 starts listening
 for clients connections on port 30002 and 30001 (you can change both the
 ports if you want, see --help output).
 
-Port 30002
----
+##Port 30002
 
 Connected clients are served with data ASAP as they arrive from the device
 (or from file if --ifile is used) in the raw format similar to the following:
@@ -161,8 +155,7 @@ Connected clients are served with data ASAP as they arrive from the device
 
 Every entry is separated by a simple newline (LF character, hex 0x0A).
 
-Port 30001
----
+##Port 30001
 
 Port 30001 is the raw input port, and can be used to feed Dump1090 with
 data in the same format as specified above, with hex messages starting with
@@ -191,8 +184,7 @@ Or alternatively to see what's happening on the screen:
 
 Then you can feed it from different data sources from the internet.
 
-Port 30003
----
+##Port 30003
 
 Connected clients are served with messages in SBS1 (BaseStation) format,
 similar to:
@@ -202,8 +194,7 @@ similar to:
 
 This can be used to feed data to various sharing sites without the need to use another decoder.
 
-Antenna
----
+##Antenna
 
 Mode S messages are transmitted in the 1090 Mhz frequency. If you have a decent
 antenna you'll be able to pick up signals from aircrafts pretty far from your
@@ -223,8 +214,7 @@ resources:
 * http://www.lll.lu/~edward/edward/adsb/antenna/ADSBantenna.html
 * http://modesbeast.com/pix/adsb-ant-drawing.gif
 
-Aggressive mode
----
+##Aggressive mode
 
 With --aggressive it is possible to activate the *aggressive mode* that is a
 modified version of the Mode S packet detection and decoding.
@@ -241,8 +231,7 @@ The algorithm in aggressive mode is modified in the following ways:
 The use of aggressive mdoe is only advised in places where there is low traffic
 in order to have a chance to capture some more messages.
 
-Debug mode
----
+##Debug mode
 
 The Debug mode is a visual help to improve the detection algorithm or to
 understand why the program is not working for a given input.
@@ -262,8 +251,7 @@ Debug mode includes an optional javascript output that is used to visualize
 packets using a web browser, you can use the file debug.html under the
 'tools' directory to load the generated frames.js file.
 
-How this program works?
----
+##How this program works?
 
 The code is very documented and written in order to be easy to understand.
 For the diligent programmer with a Mode S specification on his hands it
@@ -273,8 +261,7 @@ The algorithms I used were obtained basically looking at many messages
 as displayed using a trow-away SDL program, and trying to model the algorithm
 based on how the messages look graphically.
 
-How to test the program?
----
+##How to test the program?
 
 If you have an RTLSDR device and you happen to be in an area where there
 are aircrafts flying over your head, just run the program and check for signals.
@@ -287,8 +274,7 @@ Just run it like this:
 
     ./dump1090 --ifile testfiles/modes1.bin
 
-What is --strip mode?
----
+##What is --strip mode?
 
 It is just a simple filter that will get raw IQ 8 bit samples in input
 and will output a file missing all the parts of the file where I and Q
@@ -301,8 +287,7 @@ Use it like this:
 I used it in order to create a small test file to include inside this
 program source code distribution.
 
-Contributing
----
+##Contributing
 
 Dump1090 was written during some free time during xmas 2012, it is an hobby
 project so I'll be able to address issues and improve it only during
@@ -310,8 +295,7 @@ free time, however you are incouraged to send pull requests in order to
 improve the program. A good starting point can be the TODO list included in
 the source distribution.
 
-Credits
----
+##Credits
 
 Dump1090 was written by Salvatore Sanfilippo <antirez@gmail.com> and is
 released under the BSD three clause license.
