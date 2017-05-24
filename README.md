@@ -16,6 +16,10 @@ make install	| Installs required packages for this application - libusb, librtls
 
 ## TODO List
 
+The original dump1090 still has some TODOs left, however they seem to be for
+other options not necessary for this specific usage of '--interactive --net 
+--log'.
+
 * HTML
 	- [x] Edit HTML to include extra fields - azimuth, distance, and elevation.
 	- [x] Nautical mile distances from center position.
